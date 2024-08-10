@@ -1,4 +1,4 @@
-# Echinoid-Geochemistry
+# Echinoid-Geochemistry Appendices
 
 Supplementary materials for Gorzelak et al.
 
