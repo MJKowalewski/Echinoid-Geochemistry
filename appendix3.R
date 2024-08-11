@@ -15,7 +15,6 @@ options(scipen = 100)
 library(ppcor)
 library(asbio)
 library(DescTools)
-
 source(file='appendix4.R')
 mycol <- c('skyblue1', 'blue3', 'red1','gray40') # colors for taxa (alphabetically by genus)
 pchtax <- 21:24
@@ -212,13 +211,14 @@ mtext(side=3, line=-1.5, adj=0.97, LETTERS[i], cex=0.8)
 par(tempar)
 dev.off()
 
-# pca analysis====
+# pca analysis Figure 4====
 select.vars <- c(18:25)
 select.pch <- pchtax
 scaling <- T
 for (k in 2:3) {
   mypcs <- c(1,k)
-  pdf(paste0('pcs', paste(mypcs, collapse = '-'),'.pdf'), width=6.2, height=5)
+  if (k == 2) pdf('Figure 4.pdf', width=6.2, height=5)
+  if (k == 3) pdf('Figure PC2 vs PC3 not included.pdf', width=6.2, height=5)
   lay.m <- rbind(c(1,1,1,2), c(1,1,1,3), c(1,1,1,4))
   layout(lay.m)
   tempar <- par(mar=c(0,0,0,0), oma=c(5,5,5,5), xpd=NA)
