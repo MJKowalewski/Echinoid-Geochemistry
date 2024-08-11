@@ -317,6 +317,8 @@ legend('bottomright', pch=pchtax[2:3], levels(nn$taxon), cex=0.8,
 mtext(side=3, line=-1.5, adj=0.03, paste('r (all) =', corcf[1,2]), cex=0.6)
 mtext(side=3, line=-2.5, adj=0.03, paste('r (L.s) =', corcfL[1,2]), cex=0.6)
 mtext(side=3, line=-3.5, adj=0.03, paste('r (E.m) =', corcfE[1,2]), cex=0.6)
+points(nn$Mg.Ca[nn$Region == 'Northern Gulf'], nn$H[nn$Region == 'Northern Gulf'],
+       pch=16, cex=0.6)
 dev.off()
 
 #stat descriptors and wilcoxon test====
