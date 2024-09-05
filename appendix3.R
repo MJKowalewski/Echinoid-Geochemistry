@@ -18,6 +18,7 @@ library(DescTools)
 source(file='appendix4.R')
 mycol <- c('skyblue1', 'blue3', 'red1','gray40') # colors for taxa (alphabetically by genus)
 pchtax <- 21:24
+pchreg <- c(21, 22, 24)
 mystats <- function(x) c(median(x), mean(x), sd(x), length(x))
 medboot <- function(x, times=99, prob=c(0.5, 0.025, 0.975, 0.25, 0.75)) {
   out1 <- vector(mode='numeric', length=times)
@@ -33,7 +34,6 @@ medboot <- function(x, times=99, prob=c(0.5, 0.025, 0.975, 0.25, 0.75)) {
 }
 
 # Datasets ====
-
 bulk <- read.csv('appendix1.csv', stringsAsFactors=T) # bulk analyses
 nn <- read.csv('appendix2.csv', stringsAsFactors=T) # nano analyses
 map2 <- read.csv('appendix5.csv', header=F, na.strings=c(NA, '.', ''))
@@ -45,11 +45,15 @@ bulk$species[bulk$species == 'Encope michelini'] <- 'Encope spp.'
 bulk$species <- as.factor(bulk$species)
 bulk$Pb <- bulk$Pb/1000 # convert from micromolar to milimolar
 
-# change assignment and salinity estimates for the outer Cedar Key station to 'Northern Gulf'
+# change assignment and salinity estimates for the outer Cedar Key
+# stations to 'Northern Gulf'. Not clear which variant is most appropriate
+# no major conclusions changed depending on station assignment decision
 # salinity station: 21FLSEAS_WQX-37SEAS105  31.5000000 31.5000 31.00000 32.00000 31.000 32.000 28.8703 -82.7790 1.6000000
 repl.sal <- c(31.5000000, 31.5000, 31.00000, 32.00000, 31.000, 32.000)
 bulk$Region[which(bulk$Station == 'CK-2')] <- 'Northern Gulf'
 bulk[which(bulk$Station == 'CK-2'), c("sal_mean", "sal_med", "sal_q25", "sal_q75", "sal_min", "sal_max")] <- repl.sal
+# bulk$Region[which(bulk$Station == 'CK-5')] <- 'Northern Gulf'
+# bulk[which(bulk$Station == 'CK-5'), c("sal_mean", "sal_med", "sal_q25", "sal_q75", "sal_min", "sal_max")] <- repl.sal
 
 # Table 1 Summary of Sites ====
 sites <- as.factor(paste(bulk$Region, paste0('Site-', bulk$Station)))
@@ -157,7 +161,7 @@ elratios <- list(Mg=bulk$Mg, Sr=bulk$Sr, Ba=bulk$Ba, S=bulk$S, Li=bulk$Li,
 outcorrep <- NULL
 for (i in 1:length(elratios)) {
 tempcor <- cor.test(bulk$meanT, elratios[[i]])
-salcor <- cor.test(bulk$sal_mean, elratios[[i]])
+salcor <- cor.test(bulk$sal_med, elratios[[i]])
 depthcor <- cor.test(bulk$Depth, elratios[[i]])
 spcors <- spcor(cbind(elratios[[i]], temp=bulk$meanT, sal=bulk$sal_mean, 
                       depth=bulk$Depth))
@@ -186,27 +190,30 @@ size.cor
 
 # salinity versus element ratios plots====
 pdf('Figure 3 bulk elements vs salinity plots.pdf', height=9, width=6)
-tempar <- par(mfrow=c(length(elratios)/2,2), oma=c(5,1,3,0), mar=c(0,5,1,1))
+tempar <- par(mfrow=c(length(elratios)/2,2), oma=c(5,1,4,0), mar=c(0,5,1,2))
 for (i in 1:length(elratios)) {
 pcors <- pcor(cbind(temp=bulk$meanT, sal=bulk$sal_mean, elratios[[i]]))
-plot(bulk$sal_mean, elratios[[i]], pch=pchtax[bulk$species], cex=1.2,
+plot(bulk$sal_med, elratios[[i]], pch=pchreg[bulk$Region], cex=0.9,
      las=1, xlab='', col=mycol[bulk$species],
      bg=adjustcolor(mycol[bulk$species],0.1), axes=F,
      ylab='')
 mtext(side=2, line=4, paste0(names(elratios)[i],'/Ca [mmol/mol]'), cex=0.8)
-mtext(side=3, line=-1.2, adj=0.15, cex=0.7,
+mtext(side=3, line=-1.2, adj=0.05, cex=0.7,
       paste('r =', round(outcorrep[i,3],3)))
-mtext(side=3, line=-2, adj=0.15, cex=0.7,
+mtext(side=3, line=-2, adj=0.05, cex=0.7,
       paste('r* =', round(outcorrep[i,9],3)))
-if (i == 1) legend(28, 190, pch=pchtax, pt.bg=adjustcolor(mycol,0.1),
-                   text.col=mycol, horiz=T, col=mycol,
+if (i == 1) legend(28, 205, pch=NA, pt.bg=adjustcolor(mycol,0.1),
+                   text.col=mycol, col=mycol,
                    levels(bulk$species), xpd=NA, bty='n', x.intersp=0.5)
+if (i == 2) legend(28, 3, pch=pchreg, pt.bg=adjustcolor('gray40',0.3),
+                   text.col='gray30', col='gray40',
+                   levels(bulk$Region), xpd=NA, bty='n', x.intersp=0.5)
 # if (i == length(elratios)-1) mtext(side=1, line=3, bquote('temperature [C'*degree*']'))
 if (i > length(elratios)-2) mtext(side=1, line=3, 'salinity [\u2030]', cex=0.8)
 if (i > length(elratios)-2) axis(1)
 axis(2, las=1)
 box()
-mtext(side=3, line=-1.5, adj=0.97, LETTERS[i], cex=0.8)
+mtext(side=3, line=-1.5, adj=0.5, LETTERS[i], cex=0.8)
 }
 par(tempar)
 dev.off()
@@ -215,6 +222,7 @@ dev.off()
 select.vars <- c(18:25)
 select.pch <- pchtax
 scaling <- T
+bubbles <- 0.5 + 0.3*(bulk$sal_med-28)
 for (k in 2:3) {
   mypcs <- c(1,k)
   if (k == 2) pdf('Figure 4.pdf', width=6.2, height=5)
@@ -222,7 +230,7 @@ for (k in 2:3) {
   lay.m <- rbind(c(1,1,1,2), c(1,1,1,3), c(1,1,1,4))
   layout(lay.m)
   tempar <- par(mar=c(0,0,0,0), oma=c(5,5,5,5), xpd=NA)
-  outpca <- pca.main.F(bulk[,select.vars], scale=scaling, cex=1.6, las=1,
+  outpca <- pca.main.F(bulk[,select.vars], scale=scaling, cex=bubbles, las=1,
                        pch=select.pch[bulk$species], pcs=mypcs,
                        col=reg.col[bulk$Region],
                        bg=adjustcolor(reg.col[bulk$Region], 0.1))
@@ -375,13 +383,14 @@ plot(medlist[[2]]$median, medlist[[1]]$median, type='n',
 arrows(1.008*medlist[[2]]$median[5], 1.01*medlist[[1]]$median[5], 
        0.992*medlist[[2]]$median[7], 0.99*medlist[[1]]$median[7],
        lwd=my.lwd, length=my.arr, col='gray50')
-text(medlist[[2]]$median[5],medlist[[1]]$median[5],
-     'E. michelini', pos=1, font=3, cex=0.8)
 arrows(1.005*medlist[[2]]$median[6], 1.01*medlist[[1]]$median[6], 
        0.995*medlist[[2]]$median[8], 0.99*medlist[[1]]$median[8],
        lwd=my.lwd, length=my.arr, col='gray50')
-text(medlist[[2]]$median[6],medlist[[1]]$median[6],
-     'L. sexiesperforata', pos=1, font=3, cex=0.8)
+text(0.157, 4.3, 'E. michelini', pos=1, font=3, cex=0.8)
+text(0.21, 4.2, 'L. sexiesperforata', pos=1, font=3, cex=0.8)
+text(0.195, 4.75, 'outer', pos=1, cex=0.8)
+text(0.17, 4, 'inner', pos=1, cex=0.8)
+
 for (i in 1:4) {
   points(cbind(mCIMg[[i]][2:3], mCIH[[i]][1]), type='l',
          lwd=1, col='gray50')
